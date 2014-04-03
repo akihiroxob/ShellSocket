@@ -1,0 +1,86 @@
+#! /bin/bash
+
+if [ -f ./include/common_define ]; then
+    . ./include/common_define
+fi
+
+COMMAND="/bin/cat $SERVER_PIPE"
+
+function setRedirect {
+
+    if [ $# -ne 1 ]; then
+        return
+    fi
+ 
+    COMMAND="$COMMAND > $1"
+
+#    REDIRECT=""
+#    CLIENTS="$CLIENTS $1"
+#    for i in $CLIENTS;
+#    do
+#        REDIRECT="$REDIRECT > $i "
+#    done
+}
+
+function createPipe {
+
+    # WebSocket Data
+    if [ -e $SERVER_PIPE ]; then
+        rm $SERVER_PIPE;
+    fi
+    mkfifo $SERVER_PIPE;
+
+    # tell PIPE path from Client
+    if [ -e $TELLING_PIPE ]; then
+        rm $TELLING_PIPE
+    fi
+    mkfifo $TELLING_PIPE
+}
+
+function getClientPipePath {
+    
+#    logger 'SERVER' 'wait contact from new client...'
+#    echo $TELLING_PIPE
+#    read PIPE_NAME < $TELLING_PIPE
+#    logger 'SERVER' "$PIPE_NAME"
+#    #cat < $TELLING_PIPE
+#    setRedirect "$PIPE_NAME"
+    CLIENT_PIPE="/tmp/client$1"
+    while :
+    do
+        if [ -e $CLIENT_PIPE ]; then
+
+            setRedirect $CLIENT_PIPE
+            kill $SEND_PID > /dev/null 2>&1
+            break;
+        fi
+        sleep 0.1
+    done
+}
+
+function waitConnection {
+
+    while :
+    do
+        sendMessage &
+        SEND_PID=$!
+
+        logger 'SERVER' 'wait new connection...'
+        nc -l -p $PORT -e $RESPONCE_EXEC &
+
+        PROCESS=$!
+        getClientPipePath $PROCESS
+    done
+}
+
+function sendMessage {
+    logger "SERVER" "reflesh REDIRECT"
+    logger "SERVER" "$COMMAND"
+    #cat ${SERVER_PIPE}${REDIRECT}
+    eval "${COMMAND}"
+}
+#
+#  main 
+#
+createPipe
+waitConnection

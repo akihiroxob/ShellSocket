@@ -1,0 +1,11 @@
+SERVER_PIPE='/tmp/MessagePipe'
+TELLING_PIPE='/tmp/ContactPipe'
+RESPONCE_EXEC='./client'
+PORT=8888
+
+function logger {
+    echo "$1: $2" 1>&2
+}
+
+
+

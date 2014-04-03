@@ -1,0 +1,20 @@
+#! /bin/sh
+
+SERVER_PIPE=/tmp/server
+PORT=8888
+
+
+if [ ! -e $SERVER_PIPE ]; then
+    mkfifo $SERVER_PIPE;
+fi
+
+#nc -l -p $PORT -e /home/aokayama/shellScoket/get
+nc -l -p $PORT -e ./get &
+
+
+
+while :
+do
+    cat < $SERVER_PIPE | tee -a test -a test2
+
+done

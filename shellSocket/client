@@ -1,0 +1,48 @@
+#! /bin/bash
+
+#----------------------
+# set defines
+#----------------------
+CLIENT="CLIENT$$"
+CLIENT_PIPE="/tmp/client$$"
+
+#----------------------
+# include defines
+#----------------------
+if [ -f include/common_define -a -f include/websocket_define ]; then
+    . include/common_define
+    . include/websocket_define
+else
+    exit 1;
+fi
+
+function createClientPipe {
+    if [ -e $CLIENT_PIPE ]; then
+        rm $CLIENT_PIPE;
+    fi
+    mkfifo $CLIENT_PIPE
+
+#    echo "$CLIENT_PIPE" > $TELLING_PIPE
+}
+
+function sendDataToServer {
+   #while :; do cat > $SERVER_PIPE ; done
+   #while :; do cat | tee -a $SERVER_PIPE ; done
+   while :; do cat; done
+}
+
+function sendMessage {
+    cat $CLIENT_PIPE
+}
+
+#----------------------
+# main
+#----------------------
+
+# next step
+# create connection
+handShake $CLIENT
+createClientPipe
+sendMessage &
+
+cat > $SERVER_PIPE

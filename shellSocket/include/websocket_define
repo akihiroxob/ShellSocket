@@ -1,0 +1,40 @@
+# websocket key
+WSKEY='258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
+
+# encrypt
+function encrypt {
+    #echo $1 | perl -e 'use Digest::SHA1 qw( sha1 ); print sha1( <> );'
+    php -r "echo base64_encode(sha1(\"$1$WSKEY\", true));"
+}
+
+# sendAcceptHeader
+function sendAcceptHeader {
+    echo "HTTP/1.1 101 Switching Protocols" | nkf -Lw
+    echo "Upgrade: websocket" | nkf -Lw
+    echo "Connection: Upgrade" | nkf -Lw
+    echo "Sec-WebSocket-Accept: $1" | nkf -Lw
+    #echo "Sec-WebSocket-Protocol: chat" | nkf -Lw
+    echo "" | nkf -Lw
+}
+
+function handShake {
+while read command
+do
+  LINE_DATA=`echo "$command" | nkf -Lu`
+  logger "$1" "$LINE_DATA"
+
+  HEADER=`echo $LINE_DATA | awk -F':' '{print $1}'`;
+  if [ "$HEADER" == "Sec-WebSocket-Key" ];then
+
+    KEY=`echo $LINE_DATA | awk '{print $2}'`;
+    RKEY=`encrypt $KEY`;
+  fi
+
+  if [ "$LINE_DATA" == "" ]; then
+
+    sendAcceptHeader $RKEY
+    break
+  fi
+done
+}
+
